@@ -1,22 +1,25 @@
 package task;
 
 import analysis.LinearRegression;
+import analysis.LinearRegressionParams;
 import exception.DifferentArraySizesException;
-import generator.UniformDistribution;
-import org.knowm.xchart.QuickChart;
-import org.knowm.xchart.SwingWrapper;
-import org.knowm.xchart.XYChart;
+import generator.RandomGenerator;
+import generator.impl.NoiseGenerator;
+import generator.impl.UniformDistribution;
+import org.knowm.xchart.*;
 
 import java.util.Arrays;
 import java.util.function.DoubleUnaryOperator;
 
 public class RegressionTask implements Runnable {
-    private double min;
-    private double max;
-    private double count;
-    private DoubleUnaryOperator func;
+    private final double min;
+    private final double max;
+    private final long count;
+    private final DoubleUnaryOperator func;
+    private final RandomGenerator uniformGenerator = new UniformDistribution();
+    private final RandomGenerator noiseGenerator = new NoiseGenerator();
 
-    public RegressionTask(double min, double max, double count, DoubleUnaryOperator func) {
+    public RegressionTask(double min, double max, long count, DoubleUnaryOperator func) {
         this.min = min;
         this.max = max;
         this.count = count;
@@ -25,22 +28,42 @@ public class RegressionTask implements Runnable {
 
     @Override
     public void run() {
-        double[] xArr = new UniformDistribution(-1, 1, 3000).getArray();
-        double[] noiseArr = new UniformDistribution(-1, 1, 3000).getArray();
+        // Генерация случайных величин
+        double[] xArr = uniformGenerator.generate(min, max, count);
         double[] yArr = Arrays.stream(xArr).map(func).toArray();
-        yArr = addArrays(yArr, noiseArr);
 
-        XYChart chart = QuickChart.getChart("Chart", "X", "Y", "Y = 5X + 7 + noise", xArr, yArr);
+        // Добавляем шум к Y
+        try {
+            yArr = addNoise(yArr);
+        } catch (RuntimeException e) {
+            System.out.println(e.getMessage());
+            System.exit(1);
+        }
 
-        LinearRegression regression = new LinearRegression(xArr, yArr);
-        regression.calculate();
-        logRegressionParams(regression);
+        // Вычисляем параметры линейной регрессии
+        LinearRegressionParams params = null;
+        try {
+            params = LinearRegression.calculate(xArr, yArr);
+        } catch (RuntimeException e) {
+            System.out.println(e.getMessage());
+            System.exit(1);
+        }
 
-        double[] approx = Arrays.stream(xArr).map(x -> regression.a * x + regression.b).toArray();
+        // Аппроксимируем
+        double[] yApprox = approximate(xArr, params);
 
-        chart.addSeries("Approximated", xArr, approx);
+        // Выводим
+        showParams(params);
+        showChart(xArr, yArr, yApprox);
+    }
 
-        new SwingWrapper<>(chart).displayChart();
+    private double[] addNoise(double[] arr) {
+        double[] noiseArr = noiseGenerator.generate(-1, 1, count);
+        return addArrays(arr, noiseArr);
+    }
+
+    private static double[] approximate(double[] xArr, LinearRegressionParams params) {
+        return Arrays.stream(xArr).map(x -> params.a * x + params.b).toArray();
     }
 
     private static double[] addArrays(double[] first, double[] second) {
@@ -54,11 +77,21 @@ public class RegressionTask implements Runnable {
         return  res;
     }
 
-    private static void logRegressionParams(LinearRegression regression) {
-        System.out.println(
-                "a = " + regression.a + "\n"
-                        + "b = " + regression.b + "\n"
-                        + "k = " + regression.k
-        );
+    private static void showChart(double[] xArr, double[] yArr, double[] yApprox) {
+        XYChart chart = new XYChartBuilder().title("Linear Regression").xAxisTitle("X").yAxisTitle("Y").build();
+
+        chart.getStyler().setDefaultSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Scatter);
+        chart.getStyler().setMarkerSize(3);
+
+        chart.addSeries("Initial", xArr, yArr);
+
+        XYSeries approximated = chart.addSeries("Approximated", xArr, yApprox);
+        approximated.setXYSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Line);
+
+        new SwingWrapper<>(chart).displayChart();
+    }
+
+    private static void showParams(LinearRegressionParams params) {
+        System.out.println(params);
     }
 }

@@ -6,43 +6,29 @@ import exception.EmptyArrayException;
 import java.util.Arrays;
 
 public class LinearRegression {
-    public double a = 0.0;
-    public double b = 0.0;
-    public double k = 0.0;
-
-    private double[] xArr;
-    private double[] yArr;
-
-    public LinearRegression(double[] xArr, double[] yArr) {
-        setInitials(xArr, yArr);
-    }
-
-    public void setInitials(double[] xArr, double[] yArr) {
+    public static LinearRegressionParams calculate(double[] xArr, double[] yArr) {
         if(xArr.length != yArr.length)
             throw new DifferentArraySizesException("Разные размеры массивов");
 
-        this.xArr = xArr;
-        this.yArr = yArr;
-    }
-
-    public void calculate() {
-        double mx = Arrays.stream(xArr).average().orElseThrow(EmptyArrayException::new);
-        double my = Arrays.stream(yArr).average().orElseThrow(EmptyArrayException::new);
+        double mx = Arrays.stream(xArr).average().orElseThrow(() -> new EmptyArrayException("Нет данных"));
+        double my = Arrays.stream(yArr).average().orElseThrow(() -> new EmptyArrayException("Нет данных"));
 
         double[] tmp = new double[xArr.length];
 
         // коэффициент корреляции
         for(int i = 0; i < xArr.length; i++)
             tmp[i] = (xArr[i] - mx) * (yArr[i] - my);
-        k = Arrays.stream(tmp).sum() / xArr.length;
+        double k = Arrays.stream(tmp).sum() / xArr.length;
 
         // коэффициент a
         for(int i = 0; i < xArr.length; i++)
             tmp[i] = (xArr[i] - mx) * (xArr[i] - mx);
         double d = Arrays.stream(tmp).sum() / xArr.length;
-        a = k / d;
+        double a = k / d;
 
         // коэффициент b
-        b = my - a * mx;
+        double b = my - a * mx;
+
+        return new LinearRegressionParams(a, b, k);
     }
 }
