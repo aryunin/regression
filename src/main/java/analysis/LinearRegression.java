@@ -1,5 +1,6 @@
 package analysis;
 
+import analysis.util.LinearRegressionParams;
 import exception.DifferentArraySizesException;
 import exception.EmptyArrayException;
 

@@ -1,7 +1,8 @@
 package task;
 
 import analysis.LinearRegression;
-import analysis.LinearRegressionParams;
+import analysis.util.LinearRegressionParams;
+import com.sun.tools.javac.Main;
 import exception.DifferentArraySizesException;
 import generator.RandomGenerator;
 import generator.impl.NoiseGenerator;
@@ -37,7 +38,7 @@ public class RegressionTask implements Runnable {
             yArr = addNoise(yArr);
         } catch (RuntimeException e) {
             System.out.println(e.getMessage());
-            System.exit(1);
+            Thread.currentThread().interrupt();
         }
 
         // Вычисляем параметры линейной регрессии
@@ -46,7 +47,7 @@ public class RegressionTask implements Runnable {
             params = LinearRegression.calculate(xArr, yArr);
         } catch (RuntimeException e) {
             System.out.println(e.getMessage());
-            System.exit(1);
+            Thread.currentThread().interrupt();
         }
 
         // Аппроксимируем
@@ -92,6 +93,10 @@ public class RegressionTask implements Runnable {
     }
 
     private static void showParams(LinearRegressionParams params) {
-        System.out.println(params);
+        synchronized (Main.class)
+        {
+            System.out.println("~ Linear Regression ~");
+            System.out.println(params);
+        }
     }
 }

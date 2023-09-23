@@ -1,4 +1,4 @@
-package analysis;
+package analysis.util;
 
 public final class LinearRegressionParams {
     public final double a;
