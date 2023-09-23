@@ -34,21 +34,10 @@ public class RegressionTask implements Runnable {
         double[] yArr = Arrays.stream(xArr).map(func).toArray();
 
         // Добавляем шум к Y
-        try {
-            yArr = addNoise(yArr);
-        } catch (RuntimeException e) {
-            System.out.println(e.getMessage());
-            Thread.currentThread().interrupt();
-        }
+        yArr = addNoise(yArr);
 
         // Вычисляем параметры линейной регрессии
-        LinearRegressionParams params = null;
-        try {
-            params = LinearRegression.calculate(xArr, yArr);
-        } catch (RuntimeException e) {
-            System.out.println(e.getMessage());
-            Thread.currentThread().interrupt();
-        }
+        LinearRegressionParams params = LinearRegression.calculate(xArr, yArr);
 
         // Аппроксимируем
         double[] yApprox = approximate(xArr, params);

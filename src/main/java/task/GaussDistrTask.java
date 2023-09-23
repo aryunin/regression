@@ -27,28 +27,17 @@ public class GaussDistrTask implements Runnable {
 
     @Override
     public void run() {
-        double[] xArr;
-        double[] intervals = null;
-        double[] freqs = null;
-        DistributionParams params = null;
+        // Генерируем СВ
+        double[] xArr = gaussGenerator.generate(avg, sig, count);
 
-        try {
-            // Генерируем СВ
-            xArr = gaussGenerator.generate(avg, sig, count);
+        // Находим карманы
+        double[] intervals = CommonMethods.getIntervals(xArr, cellWidth);
 
-            // Находим карманы
-            intervals = CommonMethods.getIntervals(xArr, cellWidth);
+        // Находим частоты
+        double[] freqs = CommonMethods.getFrequencies(xArr, intervals);
 
-            // Находим частоты
-            freqs = CommonMethods.getFrequencies(xArr, intervals);
-
-            // Находим параметры распределения
-            params = new DistributionParams(xArr);
-
-        } catch (RuntimeException e) {
-            System.out.println(e.getMessage());
-            Thread.currentThread().interrupt();
-        }
+        // Находим параметры распределения
+        DistributionParams params = new DistributionParams(xArr);
 
         // Выводим информацию
         showParams(params);
